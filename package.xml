@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mavlink_communicator</name>
+  <version>0.0.0</version>
+  <description>The mavlink_communicator package</description>
+  <maintainer email="ponomarevda96@gmail.com">dmitry</maintainer>
+  <license>GPLv3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>uavcan_msgs</depend>
+
+  <export>
+  </export>
+</package>
