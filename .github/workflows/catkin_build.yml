@@ -7,13 +7,13 @@ defaults:
     shell: bash
 jobs:
   catkin_build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container:
-      image: ros:melodic
+      image: ros:noetic
     steps:
-      - run: apt-get update && apt-get install -y git
-      - run: apt-get install -y python-catkin-tools python-pip python3-pip
-      - run: apt-get install -y python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential python-catkin-tools
+      - name: Install basic requirements
+        run: |
+          apt-get update && apt-get install -y git python3-catkin-tools
 
       - uses: actions/checkout@v2
         with:
@@ -25,8 +25,8 @@ jobs:
 
       - name: Dependencies
         run: |
-          git clone https://github.com/InnopolisAero/uavcan_msgs.git catkin_ws/src/uavcan_msgs
+          git clone https://github.com/RaccoonlabDev/uavcan_msgs.git catkin_ws/src/uavcan_msgs
 
       - name: Catkin build
         run: |
-          source /opt/ros/melodic/setup.bash && cd catkin_ws && catkin build
+          source /opt/ros/noetic/setup.bash && cd catkin_ws && catkin build
