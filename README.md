@@ -2,9 +2,9 @@
 
 Mavlink communicator is a bridge between Mavlink and ROS.
 
-This package is a part of [Innopolis VTOL dynamics simulator](https://github.com/InnopolisAero/innopolis_vtol_dynamics).
+This package is a part of [UAV HITL dynamics simulator](https://github.com/RaccoonlabDev/innopolis_vtol_dynamics).
 
-It covers a minimal set of sensors required for such applications as PX4 UAVCAN HITL simulation.
+It covers a minimal set of sensors required for such applications as UAV Cyphal/DroneCAN HITL simulation.
 
 The tables below represent the supported conversions:
 
@@ -26,4 +26,4 @@ The tables below represent the supported conversions:
 | 5 | /uav/imu | [sensor_msgs/Imu](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/Imu.html)  | [HIL_SENSOR](https://mavlink.io/en/messages/common.html#HIL_SENSOR) |
 | 6 | /uav/mag | [sensor_msgs/MagneticField](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/MagneticField.html) | [HIL_SENSOR](https://mavlink.io/en/messages/common.html#HIL_SENSOR) |
 
-Here we try to use default ROS messages as much as possible, but sometimes we need to define our own messages `uavcan_msgs` to be compatible with [UavcanCommunicator](https://github.com/InnopolisAero/uavcan_communicator).
+Here we try to use default ROS messages as much as possible, but sometimes we need to define our own messages `uavcan_msgs` to be compatible with [UavcanCommunicator](https://github.com/RaccoonlabDev/uavcan_communicator).
