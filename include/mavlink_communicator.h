@@ -51,6 +51,7 @@
 #include <random>
 
 #include <std_msgs/Bool.h>
+#include <std_msgs/Float32.h>
 #include <sensor_msgs/Joy.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
@@ -58,7 +59,6 @@
 #include <geometry_msgs/QuaternionStamped.h>
 #include <uavcan_msgs/Fix.h>
 #include <uavcan_msgs/StaticPressure.h>
-#include <uavcan_msgs/StaticTemperature.h>
 #include <uavcan_msgs/RawAirData.h>
 
 
@@ -157,9 +157,9 @@ private:
     void publishArm();
 
     ros::Subscriber staticTemperatureSub_;
-    uavcan_msgs::StaticTemperature staticTemperatureMsg_;
+    std_msgs::Float32 staticTemperatureMsg_;
     float staticTemperature_;
-    void staticTemperatureCallback(uavcan_msgs::StaticTemperature::Ptr staticTemperature);
+    void staticTemperatureCallback(std_msgs::Float32::Ptr staticTemperature);
 
     ros::Subscriber staticPressureSub_;
     uavcan_msgs::StaticPressure staticPressureMsg_;

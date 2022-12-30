@@ -217,9 +217,9 @@ void MavlinkCommunicatorROS::publishActuators(const std::vector<double>& actuato
     actuatorsPub_.publish(actuatorsMsg);
 }
 
-void MavlinkCommunicatorROS::staticTemperatureCallback(uavcan_msgs::StaticTemperature::Ptr msg){
+void MavlinkCommunicatorROS::staticTemperatureCallback(std_msgs::Float32::Ptr msg){
     staticTemperatureMsg_ = *msg;
-    staticTemperature_ = msg->static_temperature - 273.15;
+    staticTemperature_ = msg->data - 273.15;
 }
 
 void MavlinkCommunicatorROS::staticPressureCallback(uavcan_msgs::StaticPressure::Ptr msg){
