@@ -56,7 +56,7 @@ constexpr char ARM_TOPIC_NAME[]                 = "/uav/arm";
 
 constexpr char STATIC_TEMPERATURE_TOPIC_NAME[]  = "/uav/static_temperature";
 constexpr char STATIC_PRESSURE_TOPIC_NAME[]     = "/uav/static_pressure";
-constexpr char STATIC_RAW_AIR_DATA_TOPIC_NAME[] = "/uav/raw_air_data";
+constexpr char DIFF_PRESSURE_TOPIC_NAME[]       = "/uav/raw_air_data";
 constexpr char GPS_POSE_TOPIC_NAME[]            = "/uav/gps_position";
 constexpr char IMU_TOPIC_NAME[]                 = "/uav/imu";
 constexpr char MAG_TOPIC_NAME[]                 = "/uav/mag";
@@ -140,9 +140,9 @@ int MavlinkCommunicatorROS::Init(int portOffset, bool is_copter_airframe){
         &MavlinkCommunicatorROS::staticPressureCallback,
         this);
 
-    rawAirDataSub_ = nodeHandler_.subscribe(STATIC_RAW_AIR_DATA_TOPIC_NAME,
+    diffPressurePaSub_ = nodeHandler_.subscribe(DIFF_PRESSURE_TOPIC_NAME,
         1,
-        &MavlinkCommunicatorROS::rawAirDataCallback,
+        &MavlinkCommunicatorROS::diffPressureCallback,
         this);
 
     gpsSub_ = nodeHandler_.subscribe(GPS_POSE_TOPIC_NAME,
@@ -193,7 +193,7 @@ void MavlinkCommunicatorROS::communicate(){
                                                         gyroFrd_,
                                                         staticPressure_,
                                                         staticTemperature_,
-                                                        diffPressure_);
+                                                        diffPressureHPa_);
 
         if(status == -1){
             ROS_ERROR_STREAM_THROTTLE(1, NODE_NAME << "Imu failed." << strerror(errno));
@@ -227,9 +227,9 @@ void MavlinkCommunicatorROS::staticPressureCallback(std_msgs::Float32::Ptr msg){
     staticPressure_ = msg->data / 100;
 }
 
-void MavlinkCommunicatorROS::rawAirDataCallback(uavcan_msgs::RawAirData::Ptr msg){
-    rawAirDataMsg_ = *msg;
-    diffPressure_ = msg->differential_pressure / 100;
+void MavlinkCommunicatorROS::diffPressureCallback(std_msgs::Float32::Ptr msg){
+    diffPressurePaMsg_ = *msg;
+    diffPressureHPa_ = msg->data / 100;
 }
 
 void MavlinkCommunicatorROS::gpsCallback(uavcan_msgs::Fix::Ptr msg){
@@ -365,7 +365,7 @@ int MavlinkCommunicator::SendHilSensor(unsigned int time_usec,
                                        Eigen::Vector3d gyroFrd,
                                        float staticPressure,
                                        float staticTemperature,
-                                       float diffPressure){
+                                       float diffPressureHPa){
     // Output data
     mavlink_hil_sensor_t sensor_msg;
     sensor_msg.time_usec = time_usec;
@@ -394,7 +394,7 @@ int MavlinkCommunicator::SendHilSensor(unsigned int time_usec,
         sensor_msg.abs_pressure = staticPressure;
         sensor_msg.pressure_alt = gpsAltitude;
         sensor_msg.pressure_alt += baroAltNoise_ * normalDistribution_(randomGenerator_);
-        sensor_msg.diff_pressure = diffPressure;
+        sensor_msg.diff_pressure = diffPressureHPa;
 
         sensor_msg.fields_updated |= SENS_BARO | SENS_DIFF_PRESS;
         lastBaroTimeUsec_ = time_usec;

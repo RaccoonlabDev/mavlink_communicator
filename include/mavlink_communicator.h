@@ -35,6 +35,7 @@
  * @file mavlink_communicator.h
  *
  * @author Roman Fedorenko <frontwise@gmail.com>
+ * @author Dmitry Ponomarev <ponomarevda96@gmail.com>
  * @author ThunderFly s.r.o., Vít Hanousek <info@thunderfly.cz>
  * @url https://github.com/ThunderFly-aerospace
  *
@@ -58,7 +59,6 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/QuaternionStamped.h>
 #include <uavcan_msgs/Fix.h>
-#include <uavcan_msgs/RawAirData.h>
 
 
 class MavlinkCommunicator{
@@ -92,7 +92,7 @@ public:
                       Eigen::Vector3d gyro_frd,
                       float staticTemperature,
                       float staticPressure,
-                      float diffPressure);
+                      float diffPressureHPa);
     int SendHilGps(unsigned int time_usec,
                    Eigen::Vector3d vel_ned,
                    Eigen::Vector3d pose_geodetic);
@@ -165,10 +165,10 @@ private:
     float staticPressure_;
     void staticPressureCallback(std_msgs::Float32::Ptr staticPressure);
 
-    ros::Subscriber rawAirDataSub_;
-    uavcan_msgs::RawAirData rawAirDataMsg_;
-    float diffPressure_;
-    void rawAirDataCallback(uavcan_msgs::RawAirData::Ptr rawAirData);
+    ros::Subscriber diffPressurePaSub_;
+    std_msgs::Float32 diffPressurePaMsg_;
+    float diffPressureHPa_;
+    void diffPressureCallback(std_msgs::Float32::Ptr diffPressurePaMsg);
 
     ros::Subscriber gpsSub_;
     uavcan_msgs::Fix gpsPositionMsg_;
