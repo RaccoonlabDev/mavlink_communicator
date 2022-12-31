@@ -58,7 +58,6 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/QuaternionStamped.h>
 #include <uavcan_msgs/Fix.h>
-#include <uavcan_msgs/StaticPressure.h>
 #include <uavcan_msgs/RawAirData.h>
 
 
@@ -162,9 +161,9 @@ private:
     void staticTemperatureCallback(std_msgs::Float32::Ptr staticTemperature);
 
     ros::Subscriber staticPressureSub_;
-    uavcan_msgs::StaticPressure staticPressureMsg_;
+    std_msgs::Float32 staticPressureMsg_;
     float staticPressure_;
-    void staticPressureCallback(uavcan_msgs::StaticPressure::Ptr staticPressure);
+    void staticPressureCallback(std_msgs::Float32::Ptr staticPressure);
 
     ros::Subscriber rawAirDataSub_;
     uavcan_msgs::RawAirData rawAirDataMsg_;
