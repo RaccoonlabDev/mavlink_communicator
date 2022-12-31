@@ -222,9 +222,9 @@ void MavlinkCommunicatorROS::staticTemperatureCallback(std_msgs::Float32::Ptr ms
     staticTemperature_ = msg->data - 273.15;
 }
 
-void MavlinkCommunicatorROS::staticPressureCallback(uavcan_msgs::StaticPressure::Ptr msg){
+void MavlinkCommunicatorROS::staticPressureCallback(std_msgs::Float32::Ptr msg){
     staticPressureMsg_ = *msg;
-    staticPressure_ = msg->static_pressure / 100;
+    staticPressure_ = msg->data / 100;
 }
 
 void MavlinkCommunicatorROS::rawAirDataCallback(uavcan_msgs::RawAirData::Ptr msg){
