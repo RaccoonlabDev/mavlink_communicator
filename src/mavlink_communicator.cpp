@@ -43,224 +43,12 @@
  */
 
 #include "mavlink_communicator.h"
-#include <iostream>
 #include <ros/ros.h>
 #include <mavlink/v2.0/common/mavlink.h>
 #include <poll.h>
 #include <netinet/tcp.h>
 
-
 const std::string NODE_NAME = "Mavlink PX4 Communicator";
-constexpr char ACTUATOR_TOPIC_NAME[]            = "/uav/actuators";
-constexpr char ARM_TOPIC_NAME[]                 = "/uav/arm";
-
-constexpr char STATIC_TEMPERATURE_TOPIC_NAME[]  = "/uav/static_temperature";
-constexpr char STATIC_PRESSURE_TOPIC_NAME[]     = "/uav/static_pressure";
-constexpr char DIFF_PRESSURE_TOPIC_NAME[]       = "/uav/raw_air_data";
-constexpr char GPS_POSE_TOPIC_NAME[]            = "/uav/gps_position";
-constexpr char IMU_TOPIC_NAME[]                 = "/uav/imu";
-constexpr char MAG_TOPIC_NAME[]                 = "/uav/mag";
-
-
-int main(int argc, char **argv){
-    // 1. Init node
-    ros::init(argc, argv, NODE_NAME.c_str());
-    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
-        ros::console::notifyLoggerLevelsChanged();
-    }
-    ros::NodeHandle nodeHandler("mavlink_communicator");
-
-    // 2. Define which mavlink actuators format should we use (
-    // - quad rotors with actuators cmd size = 4
-    // - or VTOL with actuators cmd size = 8)
-    std::string vehicle;
-    if(!nodeHandler.getParam("vehicle", vehicle)){
-        ROS_ERROR_STREAM(NODE_NAME << "There is no vehicle params");
-        ros::shutdown();
-    }
-    bool isCopterAirframe;
-    const std::string VEHICLE_IRIS = "iris";
-    const std::string VEHICLE_INNOPOLIS_VTOL = "innopolis_vtol";
-    if(vehicle == VEHICLE_INNOPOLIS_VTOL){
-        isCopterAirframe = false;
-    }else if(vehicle == VEHICLE_IRIS){
-        isCopterAirframe = true;
-    }else{
-        ROS_ERROR_STREAM(NODE_NAME << "There is no at least one of required simulator parameters.");
-        ros::shutdown();
-    }
-
-    // 3. Get altitude reference position
-    float altRef = 0;
-    const std::string SIM_PARAMS_PATH = "/uav/sim_params/";
-    if(!ros::param::get(SIM_PARAMS_PATH + "alt_ref", altRef)){
-        ROS_ERROR_STREAM(NODE_NAME << "There is no reference altitude parameter.");
-        ros::shutdown();
-    }
-    altRef = 0;
-
-    int px4id = 0;
-
-    MavlinkCommunicatorROS communicator(nodeHandler, altRef);
-    if(communicator.Init(px4id, isCopterAirframe) != 0) {
-        ROS_ERROR("Unable to Init PX4 Communication");
-        ros::shutdown();
-    }
-
-    ros::Rate r(500);
-    while(ros::ok()){
-        communicator.communicate();
-        ros::spinOnce();
-        r.sleep();
-    }
-    return 0;
-}
-
-MavlinkCommunicatorROS::MavlinkCommunicatorROS(ros::NodeHandle nodeHandler, float alt_home) :
-    nodeHandler_(nodeHandler){
-}
-
-int MavlinkCommunicatorROS::Init(int portOffset, bool is_copter_airframe){
-    int result = mavlinkCommunicator_.Init(portOffset, is_copter_airframe);
-    if(result != 0){
-        return result;
-    }
-
-    armPub_ = nodeHandler_.advertise<std_msgs::Bool>(ARM_TOPIC_NAME, 1);
-    actuatorsPub_ = nodeHandler_.advertise<sensor_msgs::Joy>(ACTUATOR_TOPIC_NAME, 1);
-
-
-    staticTemperatureSub_ = nodeHandler_.subscribe(STATIC_TEMPERATURE_TOPIC_NAME,
-        1,
-        &MavlinkCommunicatorROS::staticTemperatureCallback,
-        this);
-
-    staticPressureSub_ = nodeHandler_.subscribe(STATIC_PRESSURE_TOPIC_NAME,
-        1,
-        &MavlinkCommunicatorROS::staticPressureCallback,
-        this);
-
-    diffPressurePaSub_ = nodeHandler_.subscribe(DIFF_PRESSURE_TOPIC_NAME,
-        1,
-        &MavlinkCommunicatorROS::diffPressureCallback,
-        this);
-
-    gpsSub_ = nodeHandler_.subscribe(GPS_POSE_TOPIC_NAME,
-        1,
-        &MavlinkCommunicatorROS::gpsCallback,
-        this);
-    imuSub_ = nodeHandler_.subscribe(IMU_TOPIC_NAME,
-        1,
-        &MavlinkCommunicatorROS::imuCallback,
-        this);
-    magSub_ = nodeHandler_.subscribe(MAG_TOPIC_NAME,
-        1,
-        &MavlinkCommunicatorROS::magCallback,
-        this);
-
-    return result;
-}
-
-void MavlinkCommunicatorROS::communicate(){
-    auto gpsTimeUsec = gpsPositionMsg_.header.stamp.toNSec() / 1000;
-    auto imuTimeUsec = imuMsg_.header.stamp.toNSec() / 1000;
-
-    std::vector<double> actuators(8);
-    if(mavlinkCommunicator_.Receive(false, isArmed_, actuators) == 1){
-        publishActuators(actuators);
-        publishArm();
-    }
-
-    /**
-     * @note For some reasons sometimes PX4 ignores GPS all messages after first if we
-     * send it too soon. So, just ignoring first few messages is ok.
-     * @todo Understand why and may be develop a better approach
-     */
-    if (gpsMsgCounter_ >= 5 && gpsTimeUsec >= lastGpsTimeUsec_ + GPS_PERIOD_US){
-        lastGpsTimeUsec_ = gpsTimeUsec;
-
-        if(mavlinkCommunicator_.SendHilGps(gpsTimeUsec, linearVelocityNed_, gpsPosition_) == -1){
-            ROS_ERROR_STREAM_THROTTLE(1, NODE_NAME << ": GPS failed." << strerror(errno));
-        }
-    }
-    if (imuTimeUsec >= lastImuTimeUsec_ + IMU_PERIOD_US){
-        lastImuTimeUsec_ = imuTimeUsec;
-
-        int status = mavlinkCommunicator_.SendHilSensor(imuTimeUsec,
-                                                        gpsPosition_.z(),
-                                                        magFrd_,
-                                                        accFrd_,
-                                                        gyroFrd_,
-                                                        staticPressure_,
-                                                        staticTemperature_,
-                                                        diffPressureHPa_);
-
-        if(status == -1){
-            ROS_ERROR_STREAM_THROTTLE(1, NODE_NAME << "Imu failed." << strerror(errno));
-        }
-    }
-}
-
-void MavlinkCommunicatorROS::publishArm(){
-    std_msgs::Bool armMsg;
-    armMsg.data = isArmed_;
-    armPub_.publish(armMsg);
-}
-
-void MavlinkCommunicatorROS::publishActuators(const std::vector<double>& actuators) const{
-    // it's better to move it to class members to prevent initialization on each publication
-    sensor_msgs::Joy actuatorsMsg;
-    actuatorsMsg.header.stamp = ros::Time::now();
-    for(auto actuator : actuators){
-        actuatorsMsg.axes.push_back(actuator);
-    }
-    actuatorsPub_.publish(actuatorsMsg);
-}
-
-void MavlinkCommunicatorROS::staticTemperatureCallback(std_msgs::Float32::Ptr msg){
-    staticTemperatureMsg_ = *msg;
-    staticTemperature_ = msg->data - 273.15;
-}
-
-void MavlinkCommunicatorROS::staticPressureCallback(std_msgs::Float32::Ptr msg){
-    staticPressureMsg_ = *msg;
-    staticPressure_ = msg->data / 100;
-}
-
-void MavlinkCommunicatorROS::diffPressureCallback(std_msgs::Float32::Ptr msg){
-    diffPressurePaMsg_ = *msg;
-    diffPressureHPa_ = msg->data / 100;
-}
-
-void MavlinkCommunicatorROS::gpsCallback(uavcan_msgs::Fix::Ptr msg){
-    gpsPositionMsg_ = *msg;
-    gpsMsgCounter_++;
-    gpsPosition_[0] = msg->latitude_deg_1e8 * 1e-8;
-    gpsPosition_[1] = msg->longitude_deg_1e8 * 1e-8;
-    gpsPosition_[2] = msg->height_msl_mm * 1e-3;
-    linearVelocityNed_[0] = msg->ned_velocity.x;
-    linearVelocityNed_[1] = msg->ned_velocity.y;
-    linearVelocityNed_[2] = msg->ned_velocity.z;
-}
-
-void MavlinkCommunicatorROS::imuCallback(sensor_msgs::Imu::Ptr imu){
-    imuMsg_ = *imu;
-    accFrd_[0] = imu->linear_acceleration.x;
-    accFrd_[1] = imu->linear_acceleration.y;
-    accFrd_[2] = imu->linear_acceleration.z;
-
-    gyroFrd_[0] = imu->angular_velocity.x;
-    gyroFrd_[1] = imu->angular_velocity.y;
-    gyroFrd_[2] = imu->angular_velocity.z;
-}
-
-void MavlinkCommunicatorROS::magCallback(sensor_msgs::MagneticField::Ptr mag){
-    magMsg_ = *mag;
-    magFrd_[0] = mag->magnetic_field.x;
-    magFrd_[1] = mag->magnetic_field.y;
-    magFrd_[2] = mag->magnetic_field.z;
-}
-
 
 int MavlinkCommunicator::Init(int portOffset, bool is_copter_airframe){
     isCopterAirframe_ = is_copter_airframe;
@@ -330,6 +118,7 @@ int MavlinkCommunicator::Init(int portOffset, bool is_copter_airframe){
 
     unsigned int px4_addr_len = sizeof(px4MavlinkAddr_);
     ROS_INFO_STREAM(NODE_NAME << ": waiting for connection from PX4...");
+    std::cout << std::flush;
     while(true) {
         px4MavlinkSock_ = accept(listenMavlinkSock_,
                                 (struct sockaddr *)&px4MavlinkAddr_,
@@ -340,6 +129,7 @@ int MavlinkCommunicator::Init(int portOffset, bool is_copter_airframe){
             ROS_INFO_STREAM(NODE_NAME << ": PX4 Connected.");
             break;
         }
+        std::cout << std::flush;
     }
 
     return result;

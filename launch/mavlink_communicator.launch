@@ -1,0 +1,9 @@
+<launch>
+    <arg name="vehicle" default="iris" doc="[standard_vtol, iris, etc]"/>
+
+    <rosparam param="/uav/sim_params/alt_ref">0.0</rosparam>
+
+    <node pkg="mavlink_communicator" type="mavlink_communicator_node" name="mavlink_communicator" output="screen" required="true">
+        <param name="vehicle"   value="$(arg vehicle)"  />
+    </node>
+</launch>

@@ -30,8 +30,10 @@ COPY package.xml        package.xml
 # 5. Build
 RUN source /opt/ros/$ROS_DISTRO/setup.bash && cd /catkin_ws && catkin build
 
-CMD source /opt/ros/melodic/setup.bash      && \
-    source /catkin_ws/devel/setup.bash      && \
-    echo "main process has been started"    && \
-    echo "do nothing yet"                   && \
+COPY launch             launch/
+
+CMD source /opt/ros/melodic/setup.bash                          && \
+    source /catkin_ws/devel/setup.bash                          && \
+    echo "main process has been started"                        && \
+    roslaunch mavlink_communicator mavlink_communicator.launch  && \
     echo "container has been finished"

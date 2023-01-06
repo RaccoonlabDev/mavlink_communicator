@@ -27,11 +27,13 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIRS}
 )
-add_library(${PROJECT_NAME} STATIC src/mavlink_communicator.cpp)
+add_library(${PROJECT_NAME} STATIC
+    src/mavlink_communicator_ros.cpp
+    src/mavlink_communicator.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 
 ## Build mavlink_communicator node
-add_executable(${PROJECT_NAME}_node src/mavlink_communicator.cpp)
+add_executable(${PROJECT_NAME}_node src/mavlink_communicator_ros.cpp)
 target_link_libraries(${PROJECT_NAME}_node
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
