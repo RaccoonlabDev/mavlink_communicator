@@ -45,21 +45,10 @@
 #ifndef PX4_COMMUNICATOR_H
 #define PX4_COMMUNICATOR_H
 
-#include <ros/ros.h>
 #include <netinet/in.h>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <random>
-
-#include <std_msgs/Bool.h>
-#include <std_msgs/Float32.h>
-#include <sensor_msgs/Joy.h>
-#include <sensor_msgs/Imu.h>
-#include <sensor_msgs/MagneticField.h>
-#include <geometry_msgs/Twist.h>
-#include <geometry_msgs/QuaternionStamped.h>
-#include <uavcan_msgs/Fix.h>
-
 
 class MavlinkCommunicator{
 public:
@@ -136,63 +125,5 @@ private:
     double absPressureNoise_;
     double diffPressureNoise_;
 };
-
-
-class MavlinkCommunicatorROS
-{
-public:
-    explicit MavlinkCommunicatorROS(ros::NodeHandle nodeHandler, float lat_home);
-    int Init(int portOffset, bool is_copter_airframe);
-    void communicate();
-
-private:
-    MavlinkCommunicator mavlinkCommunicator_;
-    ros::NodeHandle nodeHandler_;
-
-    ros::Publisher actuatorsPub_;
-    void publishActuators(const std::vector<double>& actuators) const;
-    ros::Publisher armPub_;
-    bool isArmed_;
-    void publishArm();
-
-    ros::Subscriber staticTemperatureSub_;
-    std_msgs::Float32 staticTemperatureMsg_;
-    float staticTemperature_;
-    void staticTemperatureCallback(std_msgs::Float32::Ptr staticTemperature);
-
-    ros::Subscriber staticPressureSub_;
-    std_msgs::Float32 staticPressureMsg_;
-    float staticPressure_;
-    void staticPressureCallback(std_msgs::Float32::Ptr staticPressure);
-
-    ros::Subscriber diffPressurePaSub_;
-    std_msgs::Float32 diffPressurePaMsg_;
-    float diffPressureHPa_;
-    void diffPressureCallback(std_msgs::Float32::Ptr diffPressurePaMsg);
-
-    ros::Subscriber gpsSub_;
-    uavcan_msgs::Fix gpsPositionMsg_;
-    Eigen::Vector3d gpsPosition_;
-    Eigen::Vector3d linearVelocityNed_;
-    uint64_t gpsMsgCounter_ = 0;
-    void gpsCallback(uavcan_msgs::Fix::Ptr gpsPosition);
-
-    ros::Subscriber imuSub_;
-    sensor_msgs::Imu imuMsg_;
-    Eigen::Vector3d accFrd_;
-    Eigen::Vector3d gyroFrd_;
-    void imuCallback(sensor_msgs::Imu::Ptr imu);
-
-    ros::Subscriber magSub_;
-    sensor_msgs::MagneticField magMsg_;
-    Eigen::Vector3d magFrd_;
-    void magCallback(sensor_msgs::MagneticField::Ptr mag);
-
-    static constexpr uint64_t GPS_PERIOD_US = 1e6 / 10;
-    static constexpr uint64_t IMU_PERIOD_US = 1e6 / 500;
-    uint64_t lastGpsTimeUsec_ = 0;
-    uint64_t lastImuTimeUsec_ = 0;
-};
-
 
 #endif
