@@ -125,11 +125,12 @@ int MavlinkCommunicator::Init(int portOffset, bool is_copter_airframe){
                                 &px4_addr_len);
         if (px4MavlinkSock_ < 0){
             ROS_ERROR_STREAM(NODE_NAME << ": accept failed: " << strerror(errno));
+            std::cout << std::flush;
         }else{
             ROS_INFO_STREAM(NODE_NAME << ": PX4 Connected.");
+            std::cout << std::flush;
             break;
         }
-        std::cout << std::flush;
     }
 
     return result;
@@ -159,6 +160,7 @@ int MavlinkCommunicator::SendHilSensor(unsigned int time_usec,
     // Output data
     mavlink_hil_sensor_t sensor_msg;
     sensor_msg.time_usec = time_usec;
+    sensor_msg.id = 0;
 
     // 1. Fill acc and gyro in FRD frame
     sensor_msg.xacc = accFrd[0];
@@ -294,14 +296,18 @@ int MavlinkCommunicator::Receive(bool blocking, bool &armed, std::vector<double>
                         }
                     }
                     return 1;
+                }else if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT){
+                    ROS_INFO_STREAM_THROTTLE(2, NODE_NAME << ": MAVLINK_MSG_ID_HEARTBEAT");
+                }else if (msg.msgid == MAVLINK_MSG_ID_COMMAND_LONG){
+                    ROS_INFO_STREAM_THROTTLE(2, NODE_NAME << ": MAVLINK_MSG_ID_COMMAND_LONG");
                 }else if (msg.msgid == MAVLINK_MSG_ID_ESTIMATOR_STATUS){
-                    ROS_ERROR_STREAM_THROTTLE(2, NODE_NAME << ": MAVLINK_MSG_ID_ESTIMATOR_STATUS");
+                    ROS_INFO_STREAM_THROTTLE(2, NODE_NAME << ": MAVLINK_MSG_ID_ESTIMATOR_STATUS");
                 }else{
                     ROS_WARN_STREAM(NODE_NAME << ": unknown msg with msgid = " << msg.msgid);
                 }
+                std::cout << std::flush;
             }
         }
-        ROS_WARN_STREAM_THROTTLE(1, NODE_NAME << ": No cmd");
         return 0;
     }
     return -1;

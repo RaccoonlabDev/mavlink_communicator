@@ -7,7 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     sensor_msgs
     geometry_msgs
-    uavcan_msgs
     tf2
     tf2_ros
 )
@@ -16,7 +15,7 @@ find_package(mavlink)
 find_package(Eigen3 REQUIRED)
 
 catkin_package(
-    CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs uavcan_msgs
+    CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs
 )
 
 ###########
@@ -31,6 +30,7 @@ add_library(${PROJECT_NAME} STATIC
     src/mavlink_communicator_ros.cpp
     src/mavlink_communicator.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC include)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 
 ## Build mavlink_communicator node
 add_executable(${PROJECT_NAME}_node src/mavlink_communicator_ros.cpp)

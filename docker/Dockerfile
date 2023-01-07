@@ -18,7 +18,6 @@ COPY install_requirements.sh install_requirements.sh
 RUN ./install_requirements.sh
 
 # 3. Install dependencies
-RUN git clone https://github.com/RaccoonlabDev/uavcan_msgs.git /catkin_ws/src/uavcan_msgs
 RUN source /opt/ros/$ROS_DISTRO/setup.bash && cd /catkin_ws && catkin build
 
 # 4. Copy the source files

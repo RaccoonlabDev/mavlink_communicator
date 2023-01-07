@@ -12,21 +12,14 @@ jobs:
       image: ros:noetic
     steps:
       - name: Install basic requirements
-        run: |
-          apt-get update && apt-get install -y git python3-catkin-tools
+        run: apt-get update && apt-get install -y git python3-catkin-tools
 
       - uses: actions/checkout@v2
         with:
           path: catkin_ws/src/mavlink_communicator
 
       - name: Install requirements
-        run: |
-          ./catkin_ws/src/mavlink_communicator/install_requirements.sh
-
-      - name: Dependencies
-        run: |
-          git clone https://github.com/RaccoonlabDev/uavcan_msgs.git catkin_ws/src/uavcan_msgs
+        run: ./catkin_ws/src/mavlink_communicator/install_requirements.sh
 
       - name: Catkin build
-        run: |
-          source /opt/ros/noetic/setup.bash && cd catkin_ws && catkin build
+        run: source /opt/ros/noetic/setup.bash && cd catkin_ws && catkin build

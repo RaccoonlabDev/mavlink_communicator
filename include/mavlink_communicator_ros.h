@@ -35,13 +35,12 @@
 #include <sensor_msgs/NavSatFix.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/QuaternionStamped.h>
-#include <uavcan_msgs/Fix.h>
 
 
 class MavlinkCommunicatorROS
 {
 public:
-    explicit MavlinkCommunicatorROS(ros::NodeHandle nodeHandler, float lat_home);
+    explicit MavlinkCommunicatorROS(ros::NodeHandle nodeHandler);
     int Init(int portOffset, bool is_copter_airframe);
     void communicate();
 
@@ -70,20 +69,17 @@ private:
     float diffPressureHPa_;
     void diffPressureCallback(std_msgs::Float32::Ptr diffPressurePaMsg);
 
+    uint64_t gpsMsgCounter_ = 0;
+
     ros::Subscriber gpsPositionSub_;
     sensor_msgs::NavSatFix gpsPositionMsg_;
     Eigen::Vector3d gpsPosition_;
     void gpsPositionCallback(sensor_msgs::NavSatFix::Ptr gpsPositionMsg);
-    uint64_t gpsMsgCounter_ = 0;
 
     ros::Subscriber gpsVelocitySub_;
     geometry_msgs::Twist gpsVelocityMsg_;
     Eigen::Vector3d linearVelocityNed_;
     void gpsVelocityCallback(geometry_msgs::Twist::Ptr gpsVelocityMsg);
-
-    ros::Subscriber gpsSub_;
-    uavcan_msgs::Fix gpsPositionLegacyMsg_;
-    void gpsCallback(uavcan_msgs::Fix::Ptr gpsPosition);
 
     ros::Subscriber imuSub_;
     sensor_msgs::Imu imuMsg_;
