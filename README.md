@@ -25,7 +25,7 @@ The package covers a minimal set of sensors required for PX4 MAVLink SITL simula
 
 | № | Default ROS Topic name | ROS msg         |
 | - | ----------------------- | --------------- |
-| 1 | /uav/gps_position       | [sensor_msgs::NavSatFix](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/NavSatFix.html) |
+| 1 | /uav/gps_point          | [sensor_msgs::NavSatFix](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/NavSatFix.html) |
 | 2 | /uav/velocity           | [geometry_msgs::Twist](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/Twist.html) |
 
 ## Usage
