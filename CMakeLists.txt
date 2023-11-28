@@ -18,6 +18,10 @@ catkin_package(
     CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs
 )
 
+# MAVLink shows many warnings. Let's just ignore them for a while
+# https://stackoverflow.com/questions/65011913/cmake-suppress-all-warnings
+add_definitions(-w)
+
 ###########
 ## Build ##
 ###########
